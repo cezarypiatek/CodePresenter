@@ -6,17 +6,17 @@
   cursor: pointer;
 }
 
-.node:hover {
+.node:hover, .node-leaf:hover {
   stroke: #000;
   stroke-width: 1.5px;
 }
 
-.node--root {
+.node-root {
   stroke: #777;
   stroke-width: 2px;
 }
 
-.node--leaf {
+.node-leaf {
   fill: white;
   stroke: #777;
   stroke-width: 1px;
@@ -30,8 +30,8 @@
 }
 
 .label,
-.node--root,
-.node--leaf {
+.node-root,
+ {
   pointer-events: none;
 }
 
@@ -73,7 +73,7 @@ var svg = d3.select("body").append("svg")
   svg.append("g").selectAll("circle")
       .data(nodes)
     .enter().append("circle")
-      .attr("class", function(d) { return d.parent ? d.children ? "node" : "node node--leaf" : "node node--root"; })
+      .attr("class", function(d) { return d.parent ? d.children ? "node" : "node node-leaf" : "node node-root"; })
       .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
       .attr("r", function(d) { return d.r; })	
       .style("fill", function(d) { return d.weight > 0.0 ? "darkred" :
