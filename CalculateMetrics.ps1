@@ -129,24 +129,46 @@ function Get-SvnStatistics(){
     $XmlReader = [Xml.XmlReader]::Create($Reader)
     $fileStatistics = @{};
     try{
+        $moves = @()
         while ($XmlReader.Read())
         {
             if ($XmlReader.IsStartElement())
             {
-                if(($XmlReader.Name -eq "path") -and ($XmlReader["kind"] -eq "file") )
+                if(($XmlReader.Name -eq "path") -and ($XmlReader["action"] -ne "D") -and ($XmlReader["kind"] -eq "file") )
                 {
+                    $originFile = $null
+                    if($XmlReader["copyfrom-path"] -ne $null)
+                    {
+                        $originFile = $XmlReader["copyfrom-path"].Replace($modulePath,"").Trim('/')
+
+                    }
                     $XmlReader.Read() | Out-Null
                     if(($XmlReader.Value.StartsWith($modulePath)) -and ($XmlReader.Value.EndsWith(".cs")))
                     {
                         $file = $XmlReader.Value.Replace($modulePath,"").Trim('/')
+
                         if($fileStatistics[$file] -eq $null)
                         {
                             $fileStatistics[$file] = 1
                         }else{
                             $fileStatistics[$file]++
                         }
+
+                        if($originFile -ne $null)
+                        {
+                            $moves+= @{from=$originFile; to= $file}
+                        }
                     }
                 }
+            }
+        }
+
+        [array]::Reverse($moves)
+        foreach($move in $moves)
+        {
+            if($fileStatistics[$move.from] -ne $null)
+            {
+                $fileStatistics[$move.to]+=$fileStatistics[$move.from]
             }
         }
     }
@@ -157,6 +179,15 @@ function Get-SvnStatistics(){
     Write-Verbose "Finish processing SVN log"
     $fileStatistics
 }
+
+
+function Set-ScriptEncoding($Encoding){
+    $OutputEncoding = New-Object -typename $Encoding
+    [Console]::OutputEncoding = New-Object -typename $Encoding
+
+}
+
+Set-ScriptEncoding -Encoding System.Text.UTF8Encoding
 
 Write-Verbose "Start generating raport"
 $locData = Get-FilesLOC
