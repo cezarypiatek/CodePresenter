@@ -81,12 +81,19 @@ var svg = d3.select("body").append("svg")
       .style("fill-opacity", function(d) { return d.weight; })
       .on("click", function(d) { return zoom(focus == d ? root : d); })
 	  .append("svg:title")
-          .text(function(d, i) { return d.name; });
+          .text(function(d, i) { 
+				if(typeof d.children == "undefined")
+				{
+					return d.name +" [LOC:"+d.value+"; Commits:"+d.commits+"]";
+				}
+				return d.name; 
+		  });
 
   svg.append("g").selectAll("text")
       .data(nodes)
     .enter().append("text")
       .attr("class", "label")
+	  attr("text-anchor", "middle")
       .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
       .style("fill-opacity", function(d) { return d.parent === root ? 1 : 0; })
       .style("display", function(d) { return d.parent === root ? null : "none"; })
