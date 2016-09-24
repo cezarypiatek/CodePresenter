@@ -83,9 +83,10 @@ function Merge-StatisticData
             foreach($p in $nameParts)
             {
                 $localRoot = AddTo-ObjectTree $localRoot $p
-            }            
-            $commitCount = $SvnData[$fileName]            
-            $localRoot.size = $el.code             
+            }
+            $commitCount = $SvnData[$fileName]
+            $localRoot.size = $el.code
+            $localRoot.commits = $commitCount
             $localRoot.weight = $commitCount/$maxCommitCount
         }
     }
