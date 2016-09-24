@@ -38,11 +38,15 @@ function Get-FilesLOC
     $clocExePath = "$PSScriptRoot\cloc-1.70.exe"
     if(-not (Test-Path $clocExePath))
     {
-        Write-Error "Cannot find file: $clocExePath"
+        $PSCmdlet.ThrowTerminatingError("Cannot find file: $clocExePath")
     }
     Write-Verbose "Start colecting LOC statistics"
     Remove-Item "$PSScriptRoot\cloc.csv" -ErrorAction SilentlyContinue
     & $clocExePath --by-file --csv --skip-uniqueness --out="$PSScriptRoot\cloc.csv"  $CheckoutDir
+    if(-not(Test-Path "$PSScriptRoot\cloc.csv"))
+    {
+        $PSCmdlet.ThrowTerminatingError("Cannot create LOC statistics file")
+    }
     Get-Content "$PSScriptRoot\cloc.csv" -Raw | ConvertFrom-Csv -Delimiter ','    
     Write-Verbose "Finish colecting LOC statistics"
 }
@@ -118,9 +122,14 @@ function Get-SvnStatistics(){
     #svn log -v --xml -r "{2016-07-01}:HEAD" ./ > svnlogfile.log
     if(-not (Test-Path $svnExePath))
     {
-        Write-Error "Cannot find svn.exe"
+        $PSCmdlet.ThrowTerminatingError("Cannot find svn.exe")
     }
+    Remove-Item "$PSScriptRoot\svnlogfile.log"
     & $svnExePath log -v --xml $CheckoutDir | Out-File "$PSScriptRoot\svnlogfile.log" -Encoding utf8
+    if(-not(Test-Path "$PSScriptRoot\svnlogfile.log"))
+    {
+        $PSCmdlet.ThrowTerminatingError("Cannot collect SVN log file")
+    }
     Write-Verbose "Finish collecting SVN log"
     Write-Verbose "Start processing SVN log"
     $modulePath = Get-SvnModulePath
