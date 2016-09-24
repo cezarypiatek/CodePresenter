@@ -72,7 +72,7 @@ function Merge-StatisticData
     
     Write-Verbose "Start merging statistic data"
     $root = Create-Node '.';
-    $maxCommitCount =  ($SvnData.Values | Measure-Object -Maximum).Maximum    
+    $maxCommitCount =  ($SvnData.Values |% {$_.commits}| Measure-Object -Maximum).Maximum    
     foreach($el in $LocData)
     {        
         $fileName = ([string] $el.filename).Replace($CheckoutDir,"").Replace('\','/').Trim('/')
@@ -84,10 +84,11 @@ function Merge-StatisticData
             {
                 $localRoot = AddTo-ObjectTree $localRoot $p
             }
-            $commitCount = $SvnData[$fileName]
+            $commitCount = $SvnData[$fileName].commits
             $localRoot.size = $el.code
             $localRoot.commits = $commitCount
             $localRoot.weight = $commitCount/$maxCommitCount
+            $localRoot.authors = $SvnData[$fileName].authors.length
         }
     }
     Write-Verbose "Finish merging statistic data"
@@ -140,11 +141,17 @@ function Get-SvnStatistics(){
     $fileStatistics = @{};
     try{
         $moves = @()
+        $currentAuthor = ""
         while ($XmlReader.Read())
         {
             if ($XmlReader.IsStartElement())
             {
-                if(($XmlReader.Name -eq "path") -and ($XmlReader["action"] -ne "D") -and ($XmlReader["kind"] -eq "file") )
+                if($XmlReader.Name -eq "author")
+                {
+                    $XmlReader.Read() | Out-Null
+                    $currentAuthor = $XmlReader.Value
+                }
+                elseif(($XmlReader.Name -eq "path") -and ($XmlReader["action"] -ne "D") -and ($XmlReader["kind"] -eq "file") )
                 {
                     $originFile = $null
                     if($XmlReader["copyfrom-path"] -ne $null)
@@ -159,9 +166,14 @@ function Get-SvnStatistics(){
 
                         if($fileStatistics[$file] -eq $null)
                         {
-                            $fileStatistics[$file] = 1
+                            $fileStatistics[$file] = @{commits=1; authors=@($currentAuthor)}
                         }else{
-                            $fileStatistics[$file]++
+                            $fileStatistics[$file].commits++
+                            if(-not $fileStatistics[$file].authors.Contains($currentAuthor))
+                            {
+                                $fileStatistics[$file].authors+=$currentAuthor
+                            }
+
                         }
 
                         if($originFile -ne $null)
@@ -178,7 +190,8 @@ function Get-SvnStatistics(){
         {
             if($fileStatistics[$move.from] -ne $null)
             {
-                $fileStatistics[$move.to]+=$fileStatistics[$move.from]
+                $fileStatistics[$move.to].commits+=$fileStatistics[$move.from].commits
+                $fileStatistics[$move.to].authors+=$fileStatistics[$move.from].authors
             }
         }
     }
