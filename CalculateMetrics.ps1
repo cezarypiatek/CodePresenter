@@ -1,6 +1,7 @@
 ﻿[CmdletBinding()]
 param([Parameter(Mandatory=$true)]$CheckoutDir, $OutputFile=".\index.html")
 
+$scriptPath = if($PSScriptRoot -eq $null){"."} else {$PSScriptRoot}
 
 function Create-Node($Name)
 {
@@ -35,19 +36,19 @@ function Get-FilesLOC
 {
     [CmdletBinding()]
     param()
-    $clocExePath = "$PSScriptRoot\cloc-1.70.exe"
+    $clocExePath = "$scriptPath\cloc-1.70.exe"
     if(-not (Test-Path $clocExePath))
     {
         $PSCmdlet.ThrowTerminatingError("Cannot find file: $clocExePath")
     }
     Write-Verbose "Start colecting LOC statistics"
-    Remove-Item "$PSScriptRoot\cloc.csv" -ErrorAction SilentlyContinue
-    & $clocExePath --by-file --csv --skip-uniqueness --out="$PSScriptRoot\cloc.csv"  $CheckoutDir
-    if(-not(Test-Path "$PSScriptRoot\cloc.csv"))
+    Remove-Item "$scriptPath\cloc.csv" -ErrorAction SilentlyContinue
+    & $clocExePath --by-file --csv --skip-uniqueness --exclude-lang=js --out="$scriptPath\cloc.csv"  $CheckoutDir
+    if(-not(Test-Path "$scriptPath\cloc.csv"))
     {
         $PSCmdlet.ThrowTerminatingError("Cannot create LOC statistics file")
     }
-    Get-Content "$PSScriptRoot\cloc.csv" -Raw | ConvertFrom-Csv -Delimiter ','    
+    Get-Content "$scriptPath\cloc.csv" -Raw | ConvertFrom-Csv -Delimiter ','    
     Write-Verbose "Finish colecting LOC statistics"
 }
 
@@ -126,16 +127,16 @@ function Get-SvnStatistics(){
     {
         $PSCmdlet.ThrowTerminatingError("Cannot find svn.exe")
     }
-    Remove-Item "$PSScriptRoot\svnlogfile.log"
-    & $svnExePath log -v --xml $CheckoutDir | Out-File "$PSScriptRoot\svnlogfile.log" -Encoding utf8
-    if(-not(Test-Path "$PSScriptRoot\svnlogfile.log"))
+    Remove-Item "$scriptPath\svnlogfile.log"
+    & $svnExePath log -v --xml $CheckoutDir | Out-File "$scriptPath\svnlogfile.log" -Encoding utf8
+    if(-not(Test-Path "$scriptPath\svnlogfile.log"))
     {
         $PSCmdlet.ThrowTerminatingError("Cannot collect SVN log file")
     }
     Write-Verbose "Finish collecting SVN log"
     Write-Verbose "Start processing SVN log"
     $modulePath = Get-SvnModulePath
-    $logfilePath = Get-Item "$PSScriptRoot\svnlogfile.log"
+    $logfilePath = Get-Item "$scriptPath\svnlogfile.log"
     $Reader = New-Object IO.StreamReader($logfilePath.FullName)
     $XmlReader = [Xml.XmlReader]::Create($Reader)
     $fileStatistics = @{};
@@ -222,6 +223,6 @@ $locData = Get-FilesLOC
 $svnData = Get-SvnStatistics
 $mergedData = Merge-StatisticData $locData $svnData
 $data = $mergedData | ConvertTo-Json -Depth 255 
-$indexContent = Get-Content "$PSScriptRoot\index_placeholder1.html" -Raw
+$indexContent = Get-Content "$scriptPath\index_placeholder1.html" -Raw
 $indexContent -replace '#DATA_PLACEHOLDER#',$data | Out-File $OutputFile
 Write-Verbose "Finish generating raport: $OutputFile"
