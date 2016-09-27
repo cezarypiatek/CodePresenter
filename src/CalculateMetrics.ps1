@@ -28,12 +28,12 @@ function AddTo-ObjectTree($Root, $Element)
 }
 
 
- <#
-    .SYNOPSIS
-        Generate calculate LOC for every file inside CheckoutDir
-#>
 function Get-FilesLOC
 {
+    <#
+        .SYNOPSIS
+            Generate calculate LOC for every file inside CheckoutDir
+    #>
     [CmdletBinding()]
     param()
     $clocExePath = "$scriptPath\cloc-1.70.exe"
@@ -52,19 +52,19 @@ function Get-FilesLOC
     Write-Verbose "Finish colecting LOC statistics"
 }
 
- <#
-    .SYNOPSIS
-        Merge LOC statistics with SVN statistics data for every file in checkout directory
-
-    .PARAMETER LocData 
-        Collection with LOC for every file
-
-    .PARAMETER SvnData
-        Dictionary with number of commits for every file
-
-#>
 function Merge-StatisticData
 {
+     <#
+        .SYNOPSIS
+            Merge LOC statistics with SVN statistics data for every file in checkout directory
+
+        .PARAMETER LocData 
+            Collection with LOC for every file
+
+        .PARAMETER SvnData
+            Dictionary with number of commits for every file
+
+    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]$LocData, 
@@ -84,9 +84,9 @@ function Merge-StatisticData
             foreach($p in $nameParts)
             {
                 $localRoot = AddTo-ObjectTree $localRoot $p
-            }
-            $commitCount = $SvnData[$fileName].commits
-            $localRoot.size = $el.code
+            }            
+            $commitCount = $SvnData[$fileName].commits            
+            $localRoot.size = $el.code             
             $localRoot.commits = $commitCount
             $localRoot.weight = $commitCount/$maxCommitCount
             $localRoot.authors = $SvnData[$fileName].authors.length
@@ -96,12 +96,12 @@ function Merge-StatisticData
     $root
 }
 
- <#
-    .SYNOPSIS
-        Get SVN module path for CheckoutDir
-#>
 function Get-SvnModulePath
 {
+     <#
+        .SYNOPSIS
+            Get SVN module path for CheckoutDir
+    #>
     $data = (svn info $CheckoutDir) -split '\r'    
     foreach($attr in $data)
     {
@@ -113,11 +113,12 @@ function Get-SvnModulePath
     }
 }
 
- <#
-    .SYNOPSIS
-        Calculate number of commits for every file inside CheckoutDir
-#>
+
 function Get-SvnStatistics(){
+     <#
+        .SYNOPSIS
+            Calculate number of commits for every file inside CheckoutDir
+    #>
     [CmdletBinding()]
     Param()
     Write-Verbose "Start collecting SVN log"
