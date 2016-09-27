@@ -203,10 +203,15 @@ function Get-SvnStatistics(){
     $fileStatistics
 }
 
+function Get-JiraTicketIds{
+    [CmdletBinding()]
+    param([Parameter(Mandatory=$true)][string]$text)
+    Select-String -InputObject $text -Pattern "([\w]+-[\d]+)" -AllMatches | % { $_.Matches } | Select-Object -ExpandProperty Value -Unique    
+}
 
 function Set-ScriptEncoding($Encoding){
     $OutputEncoding = New-Object -typename $Encoding
-    [Console]::OutputEncoding = New-Object -typename $Encoding
+    [Console]::OutputEncoding = New-Object -typename $OutputEncoding
 
 }
 
